@@ -55,8 +55,24 @@ class User extends Authenticatable
       return "http://www.gravatar.com/avatar/$hash?s=$size";
     }
 
+    /**
+     * 发送重置密码通知
+     *
+     * @return void
+     */
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPassword($token));
     }
+
+    /**
+     * 用户微博一对多
+     *
+     * @return void
+     */
+    public function statuses()
+    {
+        return $this->hasMany(Status::class);
+    }
+
 }
