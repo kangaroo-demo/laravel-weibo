@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Auth;
+use Mail;
 
 class UsersController extends Controller
 {
@@ -12,7 +13,7 @@ class UsersController extends Controller
     public function __construct()
     {
         $this->middleware('auth', [
-            'except' => ['show', 'create', 'stroe', 'index']
+            'except' => ['show', 'create', 'store', 'index', 'confirmEmail']
         ]);
 
         $this->middleware('guest', [
@@ -36,8 +37,10 @@ class UsersController extends Controller
         return view('users.show', compact('user'));
     }
 
+
     public function store(Request $request)
     {
+
         $this->validate($request, [
             'name' => 'required|max:50',
             'email' => 'required|email|unique:users|max:255',
@@ -50,18 +53,20 @@ class UsersController extends Controller
             'password' => bcrypt($request->password)
         ]);
 
-        Auth::login($user);
+        $this->sendEmailConfirmationTo($user);
 
-        session()->flash('success', '欢迎，您将在这里开启一段新的旅程~');
+        session()->flash('success', '账户激活邮件已经发送至您的注册邮箱上，请注意查收！');
 
-        return redirect()->route('users.show', [$user]);
+        return redirect('/');
     }
+
 
     public function edit(User $user)
     {
         $this->authorize('update', $user);
         return view('users.edit', compact('user'));
     }
+
 
     public function update(User $user, Request $request)
     {
@@ -88,6 +93,7 @@ class UsersController extends Controller
         return redirect()->route('users.show', $user->id);
     }
 
+
     public function destroy(User $user)
     {
         $this->authorize('destroy', $user);
@@ -95,5 +101,34 @@ class UsersController extends Controller
         $user->delete();
         session()->flash('success', '成功删除用户！');
         return back();
+    }
+
+
+    protected function sendEmailConfirmationTo($user)
+    {
+        $view = 'emails.confirm';
+        $data = compact('user');
+        $from = 'kangaroo-demo@qq.com';
+        $name = 'kangaroo-demo';
+        $to = $user->email;
+        $subject = "感谢注册 Weibo 应用，请确认你的邮箱。";
+
+        Mail::send($view, $data, function ($message) use ($from, $name, $to, $subject) {
+            $message->from($from, $name)->to($to)->subject($subject);
+        });
+    }
+
+
+    public function confirmEmail($token)
+    {
+        $user = User::where('activation_token', $token)->firstOrFail();
+
+        $user->activated = true;
+        $user->activation_token = null;
+        $user->save();
+
+        Auth::login($user);
+        session()->flash('success', '恭喜你，激活成功！');
+        return redirect()->route('users.show', [$user]);
     }
 }

@@ -20,7 +20,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for arrays.
+     * 隐藏字段
      *
      * @var array
      */
@@ -29,7 +29,22 @@ class User extends Authenticatable
     ];
 
     /**
-     * The method is used to generate gravatar.
+     * 该方法将在模型完成初始化时进行加载
+     *
+     * @return void
+     */
+    public static function boot()
+    {
+        parent::boot();
+
+        //模型被创建时执行的方法
+        static::creating(function ($user){
+            $user->activation_token = str_random(30);
+        });
+    }
+
+    /**
+     * 为用户生成头像
      *
      * @return string
      */
