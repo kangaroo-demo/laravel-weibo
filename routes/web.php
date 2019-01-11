@@ -23,7 +23,8 @@ Route::get('signup', 'UsersController@create')->name('signup');
 /* 用户控制资源路由 */
 Route::resource('users', 'UsersController');
 Route::get('signup/confirm/{token}', 'UsersController@confirmEmail')->name('confirm_email');
-
+Route::get('/users/{user}/followings', 'UsersController@followings')->name('users.followings');
+Route::get('/users/{user}/followers', 'UsersController@followers')->name('users.followers');
 
 /* 会话控制路由 */
 Route::get('login', 'SessionsController@create')->name('login');
@@ -39,3 +40,6 @@ Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('passw
 
 /* 微博相关路由 */
 Route::resource('statuses', 'StatusesController', ['only' => ['store', 'destroy']]);
+
+Route::post('/users/followers/{user}', 'FollowersController@store')->name('followers.store');
+Route::delete('/users/followers/{user}', 'FollowersController@destroy')->name('followers.destroy');
